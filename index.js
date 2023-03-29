@@ -6,6 +6,7 @@ import bcrypt  from "bcrypt";
 
 import { registerValidation } from './validations/auth.js';
 import UserModel from './models/User.js'
+import checkAuth from './utils/checkAuth.js';
 
 mongoose.connect('mongodb+srv://root:root@cluster0.lesxivh.mongodb.net/blog?retryWrites=true&w=majority')
     .then(() => console.log('DB ok'))
@@ -101,6 +102,26 @@ app.post('/auth/register', registerValidation, async (req, res) => {
             message: 'Не удалось зарегистрироваться',
         })
     }   
+});
+
+app.get('/auth/me', checkAuth, async(req, res) => {
+    try {
+        const user = await UserModel.findById(req.userId);
+        if (!user) {
+            return res.status(404).json({
+                message: 'Пользователь не найден',
+            });
+        }
+
+        const { paswordHash, ...userData } = user._doc;
+        
+        res.json({userData});
+
+    } catch (err) {
+        return res.status(500).json({
+            message: 'Нет доступа',
+        });
+    }
 });
 
 app.listen(5000, (err) => {
