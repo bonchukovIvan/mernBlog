@@ -18,6 +18,46 @@ app.get('/', (req, res) => {
     res.send('hello');
 });
 
+app.post('/auth/login', async (req, res) => {
+    try {
+        const user = await UserModel.findOne({ email: req.body.email });
+
+        if (!user) {
+            return res.status(404).json({
+                message: 'Не удалось авторизоваться',
+            });
+        }
+
+        const isValidPass = await bcrypt.compare(req.body.password, user._doc.passwordHash);
+
+        if (!isValidPass) {
+            return res.status(404).json({
+                message: 'Не удалось авторизоваться',
+            });
+        }
+        const token = jwt.sign(
+            {
+                _id: user._id,
+            },
+            'secret123',
+            {
+                expiresIn: '30d',
+            },
+        );
+
+        const { paswordHash, ...userData } = user._doc;
+        res.json({
+        ...user._doc,
+        token, 
+    });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({
+            message: 'Не удалось зарегистрироваться',
+        })
+    }
+});
+
 app.post('/auth/register', registerValidation, async (req, res) => {
 
     try {
@@ -36,8 +76,6 @@ app.post('/auth/register', registerValidation, async (req, res) => {
             avatarUrl: req.body.avatarUrl,
             passwordHash: hash,
         });
-
-       
 
         const user = await doc.save();
 
