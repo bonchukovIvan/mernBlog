@@ -9,8 +9,7 @@ export default (req, res, next) => {
             const decoded = jwt.verify(token, 'secret123');
 
             req.userId = decoded._id;
-
-            next(); 
+            next();
         } catch (err) {
             return res.status(403).json({
                 message: 'Нет доступа',
@@ -22,5 +21,4 @@ export default (req, res, next) => {
             message: 'Нет доступа',
         });
     }
-    res.send(token);
 };
